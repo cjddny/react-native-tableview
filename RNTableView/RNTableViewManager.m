@@ -10,7 +10,6 @@
 #import "RNTableView.h"
 #import "RCTBridge.h"
 #import "RCTConvert.h"
-#import "RCTFont.h"
 #import "RCTUIManager.h"
 
 @implementation RNTableViewManager
