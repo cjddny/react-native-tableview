@@ -16,6 +16,7 @@
 #import "RNTableFooterView.h"
 #import "RNTableHeaderView.h"
 #import "RNReactModuleCell.h"
+#import "MJRefresh.h"
 
 @interface RNTableView()<UITableViewDataSource, UITableViewDelegate> {
     id<RNTableViewDatasource> datasource;
@@ -184,6 +185,17 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     UIView *view = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 0.001, 0.001)];
     _tableView.tableHeaderView = view;
     _tableView.tableFooterView = view;
+    
+    _tableView.mj_footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
+        NSLog(@"mj drop fresh:----");
+        //        [_eventDispatcher sendInputEventWithName:@"press" body:@{@"target":self.reactTag}];
+        
+        [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"loadMore"}];
+        
+        [_tableView.mj_footer endRefreshing];
+        //Call this Block When enter the refresh status automatically
+    }];
+    
     _tableView.separatorStyle = self.separatorStyle;
     _tableView.separatorColor = self.separatorColor;
     _tableView.scrollEnabled = self.scrollEnabled;
