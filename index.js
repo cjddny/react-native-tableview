@@ -159,6 +159,15 @@ var TableView = React.createClass({
       );
     },
 
+    endRefresh: function(isHeader) {
+        console.log('endRefresh:------',isHeader);
+        NativeModules.RNTableViewManager.endRefresh(
+          findNodeHandle(this.tableView),
+          isHeader
+        );
+    },
+
+
     render: function() {
         return (
             <View style={[{flex:1},this.props.style]}>

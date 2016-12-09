@@ -186,15 +186,26 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     _tableView.tableHeaderView = view;
     _tableView.tableFooterView = view;
     
-    _tableView.mj_footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
+    __autoreleasing MJRefreshAutoNormalFooter *footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
         NSLog(@"mj drop fresh:----");
-        //        [_eventDispatcher sendInputEventWithName:@"press" body:@{@"target":self.reactTag}];
-        
         [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"loadMore"}];
-        
-        [_tableView.mj_footer endRefreshing];
-        //Call this Block When enter the refresh status automatically
+        //10秒没有反馈,自动消失
+        [_tableView.mj_footer performSelector:@selector(endRefreshing) withObject:nil afterDelay:10];
     }];
+    footer.refreshingTitleHidden = YES;
+    [footer setTitle:@"" forState:MJRefreshStateIdle];
+    [footer setTitle:@"" forState:MJRefreshStateRefreshing];
+    [footer setTitle:@"" forState:MJRefreshStateNoMoreData];
+    _tableView.mj_footer = footer;
+
+    
+    __autoreleasing MJRefreshNormalHeader *header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+        [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"refresh"}];
+        [_tableView.mj_header performSelector:@selector(endRefreshing) withObject:nil afterDelay:10];
+    }];
+    header.stateLabel.hidden = TRUE;
+    _tableView.mj_header = header;
+
     
     _tableView.separatorStyle = self.separatorStyle;
     _tableView.separatorColor = self.separatorColor;
