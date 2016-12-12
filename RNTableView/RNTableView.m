@@ -18,7 +18,8 @@
 #import "RNReactModuleCell.h"
 #import "MJRefresh.h"
 
-const AUTO_COMPLETE_DELAY = 3;
+const AUTO_COMPLETE_DELAY = 8;
+const SHOW_NOMORE_NUM = 7;
 
 @interface RNTableView()<UITableViewDataSource, UITableViewDelegate> {
     id<RNTableViewDatasource> datasource;
@@ -175,14 +176,18 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     if(isHeader){
         _hasHeaderResp = true;
         [_tableView.mj_header endRefreshing];
-        if (isNoMore) {
-            //            [_tableView.mj_footer endRefreshing];
-        }else{
-            [_tableView.mj_footer resetNoMoreData];
-        }
+        [_tableView.mj_footer resetNoMoreData];
     }else{
         _hasFooterResp = true;
         if (isNoMore) {
+            NSString *footStr = @"";
+            if ([_sections count] > 0) {
+                NSDictionary *tableDic = _sections[0];
+                if(tableDic && [tableDic[@"items"] count] >= SHOW_NOMORE_NUM){
+                    footStr = @"没有更多结果";
+                }
+            }
+            [(MJRefreshAutoNormalFooter*)_tableView.mj_footer setTitle:footStr forState:MJRefreshStateNoMoreData];
             [_tableView.mj_footer endRefreshingWithNoMoreData];
         }else{
             [_tableView.mj_footer endRefreshing];
@@ -230,7 +235,6 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     footer.refreshingTitleHidden = YES;
     [footer setTitle:@"" forState:MJRefreshStateIdle];
     [footer setTitle:@"" forState:MJRefreshStateRefreshing];
-    [footer setTitle:@"没有更多结果" forState:MJRefreshStateNoMoreData];
     _tableView.mj_footer = footer;
     
     
