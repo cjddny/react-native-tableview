@@ -72,4 +72,5 @@
 
 - (void) scrollToOffsetX:(CGFloat)x offsetY:(CGFloat)y animated:(BOOL)animated;
 
+- (void) endRefreshWithHeader:(BOOL)isHeader noMoreData:(BOOL)isNoMore;
 @end

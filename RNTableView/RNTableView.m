@@ -18,12 +18,15 @@
 #import "RNReactModuleCell.h"
 #import "MJRefresh.h"
 
+const AUTO_COMPLETE_DELAY = 3;
+
 @interface RNTableView()<UITableViewDataSource, UITableViewDelegate> {
     id<RNTableViewDatasource> datasource;
 }
 @property (strong, nonatomic) NSMutableArray *selectedIndexes;
 @property (strong, nonatomic) UITableView *tableView;
-
+@property (assign, nonatomic) BOOL hasHeaderResp;
+@property (assign, nonatomic) BOOL hasFooterResp;
 @end
 
 @implementation RNTableView {
@@ -41,14 +44,14 @@
 -(void) setSeparatorColor:(UIColor *)separatorColor
 {
     _separatorColor = separatorColor;
-
+    
     [self.tableView setSeparatorColor: separatorColor];
 }
 
 -(void)setScrollEnabled:(BOOL)scrollEnabled
 {
     _scrollEnabled = scrollEnabled;
-
+    
     [self.tableView setScrollEnabled:scrollEnabled];
 }
 
@@ -56,7 +59,7 @@
 {
     // will not insert because we don't need to draw them
     //   [super insertSubview:subview atIndex:atIndex];
-
+    
     // just add them to registry
     if ([subview isKindOfClass:[RNCellView class]]){
         RNCellView *cellView = (RNCellView *)subview;
@@ -80,16 +83,16 @@
 - (instancetype)initWithBridge:(RCTBridge *)bridge {
     RCTAssertParam(bridge);
     RCTAssertParam(bridge.eventDispatcher);
-
+    
     if ((self = [super initWithFrame:CGRectZero])) {
         _eventDispatcher = bridge.eventDispatcher;
-
+        
         _bridge = bridge;
         while ([_bridge respondsToSelector:NSSelectorFromString(@"parentBridge")]
                && [_bridge valueForKey:@"parentBridge"]) {
             _bridge = [_bridge valueForKey:@"parentBridge"];
         }
-
+        
         _cellHeight = 44;
         _cells = [NSMutableArray array];
         _autoFocus = YES;
@@ -104,7 +107,7 @@ RCT_NOT_IMPLEMENTED(-initWithFrame:(CGRect)frame)
 RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)setTableViewStyle:(UITableViewStyle)tableViewStyle {
     _tableViewStyle = tableViewStyle;
-
+    
     [self createTableView];
 }
 
@@ -137,13 +140,13 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void)layoutSubviews {
     [self.tableView setFrame:self.frame];
-
+    
     // if sections are not define, try to load JSON
     if (![_sections count] && _json){
         datasource = [[JSONDataSource alloc] initWithFilename:_json filter:_filter args:_filterArgs];
         self.sections = [NSMutableArray arrayWithArray:[datasource sections]];
     }
-
+    
     // find first section with selection
     NSInteger selectedSection = -1;
     for (int i=0;i<[_selectedIndexes count];i++){
@@ -167,7 +170,36 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     [_tableView setContentOffset:CGPointMake(x, y) animated:animated];
 }
 
+- (void) endRefreshWithHeader:(BOOL)isHeader noMoreData:(BOOL)isNoMore{
+    NSLog(@"native end refresh:-----");
+    if(isHeader){
+        _hasHeaderResp = true;
+        [_tableView.mj_header endRefreshing];
+        if (isNoMore) {
+            //            [_tableView.mj_footer endRefreshing];
+        }else{
+            [_tableView.mj_footer resetNoMoreData];
+        }
+    }else{
+        _hasFooterResp = true;
+        if (isNoMore) {
+            [_tableView.mj_footer endRefreshingWithNoMoreData];
+        }else{
+            [_tableView.mj_footer endRefreshing];
+        }
+    }
+}
+
 #pragma mark - Private APIs
+
+- (void)checkHasCallback:(id)isFooter{
+    BOOL is_footer = [NSNumber numberWithBool:isFooter];
+    if (is_footer && !_hasFooterResp) {
+        [_tableView.mj_footer endRefreshing];
+    }else if (!is_footer && !_hasHeaderResp){
+        [_tableView.mj_header endRefreshing];
+    }
+}
 
 - (void)createTableView {
     _tableView = [[UITableView alloc] initWithFrame:CGRectZero style:_tableViewStyle];
@@ -187,25 +219,31 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     _tableView.tableFooterView = view;
     
     __autoreleasing MJRefreshAutoNormalFooter *footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
-        NSLog(@"mj drop fresh:----");
+        _hasFooterResp = false;
         [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"loadMore"}];
-        //10秒没有反馈,自动消失
-        [_tableView.mj_footer performSelector:@selector(endRefreshing) withObject:nil afterDelay:10];
+        
+        //最后一次操作10秒没有反馈,自动消失
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(checkHasCallback:) object:@true];
+        [self performSelector:@selector(checkHasCallback:) withObject:@true afterDelay:AUTO_COMPLETE_DELAY];
+        
     }];
     footer.refreshingTitleHidden = YES;
     [footer setTitle:@"" forState:MJRefreshStateIdle];
     [footer setTitle:@"" forState:MJRefreshStateRefreshing];
-    [footer setTitle:@"" forState:MJRefreshStateNoMoreData];
+    [footer setTitle:@"没有更多结果" forState:MJRefreshStateNoMoreData];
     _tableView.mj_footer = footer;
-
+    
     
     __autoreleasing MJRefreshNormalHeader *header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
+        _hasHeaderResp = false;
         [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"refresh"}];
-        [_tableView.mj_header performSelector:@selector(endRefreshing) withObject:nil afterDelay:10];
+        
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(checkHasCallback:) object:@false];
+        [self performSelector:@selector(checkHasCallback:) withObject:@false afterDelay:AUTO_COMPLETE_DELAY];
     }];
     header.stateLabel.hidden = TRUE;
     _tableView.mj_header = header;
-
+    
     
     _tableView.separatorStyle = self.separatorStyle;
     _tableView.separatorColor = self.separatorColor;
@@ -216,7 +254,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 }
 - (void)tableView:(UITableView *)tableView willDisplayFooterView:(nonnull UIView *)view forSection:(NSInteger)section {
     UITableViewHeaderFooterView *footer = (UITableViewHeaderFooterView *)view;
-
+    
     if (self.footerTextColor){
         footer.textLabel.textColor = self.footerTextColor;
     }
@@ -243,7 +281,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section{
     if (_sections[section][@"footerHeight"]){
         return [_sections[section][@"footerHeight"] floatValue] ? [_sections[section][@"footerHeight"] floatValue] : 0.000001;
-
+        
     } else {
         if (self.footerHeight){
             return self.footerHeight;
@@ -254,7 +292,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 
 - (void)tableView:(UITableView *)tableView willDisplayHeaderView:(UIView *)view forSection:(NSInteger)section {
     UITableViewHeaderFooterView *header = (UITableViewHeaderFooterView *)view;
-
+    
     if (self.headerTextColor){
         header.textLabel.textColor = self.headerTextColor;
     }
@@ -270,12 +308,12 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         if ([cell respondsToSelector:@selector(setSeparatorInset:)]) {
             [cell setSeparatorInset:UIEdgeInsetsZero];
         }
-
+        
         // Prevent the cell from inheriting the Table View's margin settings
         if ([cell respondsToSelector:@selector(setPreservesSuperviewLayoutMargins:)]) {
             [cell setPreservesSuperviewLayoutMargins:NO];
         }
-
+        
         // Explictly set your cell's layout margins
         if ([cell respondsToSelector:@selector(setLayoutMargins:)]) {
             [cell setLayoutMargins:UIEdgeInsetsZero];
@@ -304,9 +342,9 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         if (self.detailTextColor){
             cell.detailTextLabel.textColor = self.detailTextColor;
         }
-
+        
     }
-
+    
     if (self.selectedBackgroundColor && [item[@"selected"] intValue])
     {
         [cell setBackgroundColor:self.selectedBackgroundColor];
@@ -318,7 +356,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
             [cell setBackgroundColor:[UIColor whiteColor]];
         }
     }
-
+    
     if (item[@"image"]) {
         UIImage *image;
         if ([item[@"image"] isKindOfClass:[NSString class]])
@@ -349,10 +387,10 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 - (void)setSections:(NSArray *)sections
 {
     _sections = [NSMutableArray arrayWithCapacity:[sections count]];
-
+    
     // create selected indexes
     _selectedIndexes = [NSMutableArray arrayWithCapacity:[sections count]];
-
+    
     BOOL found = NO;
     for (NSDictionary *section in sections){
         NSMutableDictionary *sectionData = [NSMutableDictionary dictionaryWithDictionary:section];
@@ -361,7 +399,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
             [allItems addObjectsFromArray:self.additionalItems];
         }
         [allItems addObjectsFromArray:sectionData[@"items"]];
-
+        
         NSMutableArray *items = [NSMutableArray arrayWithCapacity:[allItems count]];
         NSInteger selectedIndex = -1;
         for (NSDictionary *item in allItems){
@@ -375,7 +413,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
             [items addObject:itemData];
         }
         [_selectedIndexes addObject:[NSNumber numberWithUnsignedInteger:selectedIndex]];
-
+        
         sectionData[@"items"] = items;
         [_sections addObject:sectionData];
     }
@@ -420,7 +458,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 -(UITableViewCell* )tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = nil;
     NSDictionary *item = [self dataForRow:indexPath.item section:indexPath.section];
-
+    
     // check if it is standard cell or user-defined UI
     if ([self hasCustomCells:indexPath.section]){
         cell = ((RNCellView *)_cells[indexPath.section][indexPath.row]).tableViewCell;
@@ -434,7 +472,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         cell.textLabel.text = item[@"label"];
         cell.detailTextLabel.text = item[@"detail"];
     }
-
+    
     if (item[@"selected"] && [item[@"selected"] intValue]){
         if (item[@"selectedAccessoryType"])
         {
@@ -480,20 +518,20 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         CGFloat height =  cell.componentHeight;
         return height;
     }
-
+    
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
-
+    
     NSInteger selectedIndex = [self.selectedIndexes[indexPath.section] integerValue];
     NSMutableDictionary *oldValue = selectedIndex>=0 ?[self dataForRow:selectedIndex section:indexPath.section] : [NSMutableDictionary dictionaryWithDictionary:@{}];
-
+    
     NSMutableDictionary *newValue = [self dataForRow:indexPath.item section:indexPath.section];
     newValue[@"target"] = self.reactTag;
     newValue[@"selectedIndex"] = [NSNumber numberWithInteger:indexPath.item];
     newValue[@"selectedSection"] = [NSNumber numberWithInteger:indexPath.section];
-
+    
     /*
      * if allowToggle is enabled and we tap an already selected row, then remove the selection.
      * otherwise, add selection to the new row and remove selection from old row if multiple is not allowed.
@@ -510,7 +548,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         }
         [self.tableView reloadData];
     }
-
+    
     [_eventDispatcher sendInputEventWithName:@"press" body:newValue];
     self.selectedIndexes[indexPath.section] = [NSNumber numberWithInteger:indexPath.item];
 }
@@ -546,16 +584,16 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath { //implement the delegate method
-
+    
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         NSMutableDictionary *newValue = [self dataForRow:indexPath.item section:indexPath.section];
         newValue[@"target"] = self.reactTag;
         newValue[@"selectedIndex"] = [NSNumber numberWithInteger:indexPath.item];
         newValue[@"selectedSection"] = [NSNumber numberWithInteger:indexPath.section];
         newValue[@"mode"] = @"delete";
-
+        
         [_eventDispatcher sendInputEventWithName:@"change" body:newValue];
-
+        
         [_sections[indexPath.section][@"items"] removeObjectAtIndex:indexPath.row];
         [self.tableView reloadData];
     }
@@ -585,11 +623,11 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
      body:@{
             @"target": self.reactTag,
             @"contentOffset": @{
-                @"x": @(_tableView.contentOffset.x),
-                @"y": @(_tableView.contentOffset.y)
+                    @"x": @(_tableView.contentOffset.x),
+                    @"y": @(_tableView.contentOffset.y)
+                    }
             }
-          }
-    ];
+     ];
 }
 
 @end
