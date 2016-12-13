@@ -18,8 +18,9 @@
 #import "RNReactModuleCell.h"
 #import "MJRefresh.h"
 
-const AUTO_COMPLETE_DELAY = 8;
-const SHOW_NOMORE_NUM = 7;
+const int AUTO_COMPLETE_DELAY = 8;
+const int SHOW_NOMORE_NUM = 7;
+const int AHEAD_REQUEST = 7;
 
 @interface RNTableView()<UITableViewDataSource, UITableViewDelegate> {
     id<RNTableViewDatasource> datasource;
@@ -223,13 +224,14 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     _tableView.tableHeaderView = view;
     _tableView.tableFooterView = view;
     
+    __weak RNTableView *weakSelf = self;
     __autoreleasing MJRefreshAutoNormalFooter *footer = [MJRefreshAutoNormalFooter footerWithRefreshingBlock:^{
-        _hasFooterResp = false;
-        [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"loadMore"}];
+        weakSelf.hasFooterResp = false;
+        [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":weakSelf.reactTag, @"action":@"loadMore"}];
         
         //最后一次操作10秒没有反馈,自动消失
-        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(checkHasCallback:) object:@true];
-        [self performSelector:@selector(checkHasCallback:) withObject:@true afterDelay:AUTO_COMPLETE_DELAY];
+        [NSObject cancelPreviousPerformRequestsWithTarget:weakSelf selector:@selector(checkHasCallback:) object:@true];
+        [weakSelf performSelector:@selector(checkHasCallback:) withObject:@true afterDelay:AUTO_COMPLETE_DELAY];
         
     }];
     footer.refreshingTitleHidden = YES;
@@ -239,11 +241,11 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     
     
     __autoreleasing MJRefreshNormalHeader *header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
-        _hasHeaderResp = false;
-        [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":self.reactTag, @"action":@"refresh"}];
+        weakSelf.hasHeaderResp = false;
+        [_eventDispatcher sendInputEventWithName:@"onLoadMore" body:@{@"target":weakSelf.reactTag, @"action":@"refresh"}];
         
-        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(checkHasCallback:) object:@false];
-        [self performSelector:@selector(checkHasCallback:) withObject:@false afterDelay:AUTO_COMPLETE_DELAY];
+        [NSObject cancelPreviousPerformRequestsWithTarget:weakSelf selector:@selector(checkHasCallback:) object:@false];
+        [weakSelf performSelector:@selector(checkHasCallback:) withObject:@false afterDelay:AUTO_COMPLETE_DELAY];
     }];
     header.stateLabel.hidden = TRUE;
     _tableView.mj_header = header;
@@ -304,6 +306,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         header.textLabel.font = self.headerFont;
     }
 }
+
 
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -381,6 +384,12 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         }
     }
     [_eventDispatcher sendInputEventWithName:@"onWillDisplayCell" body:@{@"target":self.reactTag, @"row":@(indexPath.row), @"section": @(indexPath.section)}];
+    
+    NSArray *dataSource = _sections[indexPath.section][@"items"];
+    BOOL isRefresh = [[_tableView mj_footer] isRefreshing];
+    if ([dataSource count] - indexPath.row <= AHEAD_REQUEST && !isRefresh) {
+        [_tableView.mj_footer beginRefreshing];
+    }
 }
 
 - (void)tableView:(UITableView *)tableView didEndDisplayingCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
