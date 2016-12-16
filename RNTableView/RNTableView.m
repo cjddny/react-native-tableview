@@ -196,6 +196,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     }
 }
 
+
 #pragma mark - Private APIs
 
 - (void)checkHasCallback:(id)isFooter{

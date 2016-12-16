@@ -143,79 +143,79 @@ RCT_CUSTOM_VIEW_PROPERTY(showsVerticalScrollIndicator, BOOL, RNTableView) {
              };
 }
 
-    RCT_CUSTOM_VIEW_PROPERTY(fontSize, CGFloat, RNTableView)
-    {
-        view.font = [RCTConvert UIFont:view.font withSize:json ?: @(defaultView.font.pointSize)];
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(fontWeight, NSString, RNTableView)
-    {
-        view.font = [RCTConvert UIFont:view.font withWeight:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(fontStyle, NSString, RNTableView)
-    {
-        view.font = [RCTConvert UIFont:view.font withStyle:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(fontFamily, NSString, RNTableView)
-    {
-        view.font = [RCTConvert UIFont:view.font withFamily:json ?: defaultView.font.familyName];
-    }
-    
-    RCT_CUSTOM_VIEW_PROPERTY(detailFontSize, CGFloat, RNTableView)
-    {
-        view.detailFont = [RCTConvert UIFont:view.detailFont withSize:json ?: @(defaultView.font.pointSize)];
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(detailFontWeight, NSString, RNTableView)
-    {
-        view.detailFont = [RCTConvert UIFont:view.detailFont withStyle:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(detailFontStyle, NSString, RNTableView)
-    {
-        view.detailFont = [RCTConvert UIFont:view.detailFont withStyle:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(detailFontFamily, NSString, RNTableView)
-    {
-        view.detailFont = [RCTConvert UIFont:view.detailFont withFamily:json ?: defaultView.font.familyName];
-    }
-    
-    RCT_CUSTOM_VIEW_PROPERTY(headerFontSize, CGFloat, RNTableView)
-    {
-        view.headerFont = [RCTConvert UIFont:view.headerFont withSize:json ?: @(defaultView.font.pointSize)];
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(headerFontWeight, NSString, RNTableView)
-    {
-        view.headerFont = [RCTConvert UIFont:view.headerFont withWeight:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(headerFontStyle, NSString, RNTableView)
-    {
-        view.headerFont = [RCTConvert UIFont:view.headerFont withStyle:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(headerFontFamily, NSString, RNTableView)
-    {
-        view.headerFont = [RCTConvert UIFont:view.headerFont withFamily:json ?: defaultView.font.familyName];
-    }
-    
-    
-    RCT_CUSTOM_VIEW_PROPERTY(footerFontSize, CGFloat, RNTableView)
-    {
-        view.footerFont = [RCTConvert UIFont:view.footerFont withSize:json ?: @(defaultView.font.pointSize)];
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(footerFontWeight, NSString, RNTableView)
-    {
-        view.footerFont = [RCTConvert UIFont:view.footerFont withWeight:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(footerFontStyle, NSString, RNTableView)
-    {
-        view.footerFont = [RCTConvert UIFont:view.footerFont withStyle:json]; // defaults to normal
-    }
-    RCT_CUSTOM_VIEW_PROPERTY(footerFontFamily, NSString, RNTableView)
-    {
-        view.footerFont = [RCTConvert UIFont:view.footerFont withFamily:json ?: defaultView.font.familyName];
-    }
-    
-    RCT_EXPORT_METHOD(sendNotification:(NSDictionary *)data)
-    {
-        [self.bridge.eventDispatcher sendInputEventWithName:@"onItemNotification" body:data];
-    }
+RCT_CUSTOM_VIEW_PROPERTY(fontSize, CGFloat, RNTableView)
+{
+    view.font = [RCTConvert UIFont:view.font withSize:json ?: @(defaultView.font.pointSize)];
+}
+RCT_CUSTOM_VIEW_PROPERTY(fontWeight, NSString, RNTableView)
+{
+    view.font = [RCTConvert UIFont:view.font withWeight:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(fontStyle, NSString, RNTableView)
+{
+    view.font = [RCTConvert UIFont:view.font withStyle:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(fontFamily, NSString, RNTableView)
+{
+    view.font = [RCTConvert UIFont:view.font withFamily:json ?: defaultView.font.familyName];
+}
+
+RCT_CUSTOM_VIEW_PROPERTY(detailFontSize, CGFloat, RNTableView)
+{
+    view.detailFont = [RCTConvert UIFont:view.detailFont withSize:json ?: @(defaultView.font.pointSize)];
+}
+RCT_CUSTOM_VIEW_PROPERTY(detailFontWeight, NSString, RNTableView)
+{
+    view.detailFont = [RCTConvert UIFont:view.detailFont withStyle:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(detailFontStyle, NSString, RNTableView)
+{
+    view.detailFont = [RCTConvert UIFont:view.detailFont withStyle:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(detailFontFamily, NSString, RNTableView)
+{
+    view.detailFont = [RCTConvert UIFont:view.detailFont withFamily:json ?: defaultView.font.familyName];
+}
+
+RCT_CUSTOM_VIEW_PROPERTY(headerFontSize, CGFloat, RNTableView)
+{
+    view.headerFont = [RCTConvert UIFont:view.headerFont withSize:json ?: @(defaultView.font.pointSize)];
+}
+RCT_CUSTOM_VIEW_PROPERTY(headerFontWeight, NSString, RNTableView)
+{
+    view.headerFont = [RCTConvert UIFont:view.headerFont withWeight:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(headerFontStyle, NSString, RNTableView)
+{
+    view.headerFont = [RCTConvert UIFont:view.headerFont withStyle:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(headerFontFamily, NSString, RNTableView)
+{
+    view.headerFont = [RCTConvert UIFont:view.headerFont withFamily:json ?: defaultView.font.familyName];
+}
+
+
+RCT_CUSTOM_VIEW_PROPERTY(footerFontSize, CGFloat, RNTableView)
+{
+    view.footerFont = [RCTConvert UIFont:view.footerFont withSize:json ?: @(defaultView.font.pointSize)];
+}
+RCT_CUSTOM_VIEW_PROPERTY(footerFontWeight, NSString, RNTableView)
+{
+    view.footerFont = [RCTConvert UIFont:view.footerFont withWeight:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(footerFontStyle, NSString, RNTableView)
+{
+    view.footerFont = [RCTConvert UIFont:view.footerFont withStyle:json]; // defaults to normal
+}
+RCT_CUSTOM_VIEW_PROPERTY(footerFontFamily, NSString, RNTableView)
+{
+    view.footerFont = [RCTConvert UIFont:view.footerFont withFamily:json ?: defaultView.font.familyName];
+}
+
+RCT_EXPORT_METHOD(sendNotification:(NSDictionary *)data)
+{
+    [self.bridge.eventDispatcher sendInputEventWithName:@"onItemNotification" body:data];
+}
 
 
 RCT_EXPORT_METHOD(scrollTo:(nonnull NSNumber *)reactTag
@@ -229,9 +229,10 @@ RCT_EXPORT_METHOD(scrollTo:(nonnull NSNumber *)reactTag
          if (![view isKindOfClass:[RNTableView class]]) {
              RCTLogError(@"Invalid view returned from registry, expecting RNTableView, got: %@", view);
          }
-         [view scrollToOffsetX:x offsetY:y animated:true];
+         [view scrollToOffsetX:x offsetY:y animated:animated];
      }];
 }
+
 
 RCT_EXPORT_METHOD(endRefresh:(nonnull NSNumber *)reactTag
                   isHeader:(BOOL)isheader
@@ -246,7 +247,6 @@ RCT_EXPORT_METHOD(endRefresh:(nonnull NSNumber *)reactTag
          [view endRefreshWithHeader:isheader noMoreData:isNoMore];
      }];
 }
-
 
 
 //
