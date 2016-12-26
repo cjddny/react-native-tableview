@@ -196,6 +196,12 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
     }
 }
 
+- (void) clearSelection{
+    for (int i = 0; i < [_selectedValue count]; i++) {
+        _selectedValue[i] = @(-1);
+    }
+}
+
 
 #pragma mark - Private APIs
 
@@ -420,7 +426,7 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
             NSMutableDictionary *itemData = [NSMutableDictionary dictionaryWithDictionary:item];
             if ((itemData[@"selected"] && [itemData[@"selected"] intValue]) || (self.selectedValue && [self.selectedValue isEqual:item[@"value"]])){
                 if(selectedIndex == -1)
-                    selectedIndex = [items count];
+                selectedIndex = [items count];
                 itemData[@"selected"] = @YES;
                 found = YES;
             }
@@ -563,6 +569,8 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         [self.tableView reloadData];
     }
     if ([oldValue isEqualToDictionary:newValue]) {
+        //清空
+        self.selectedIndexes[indexPath.section] = @(-1);
         return;
     }
     [_eventDispatcher sendInputEventWithName:@"press" body:newValue];

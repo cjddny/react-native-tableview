@@ -27,7 +27,8 @@ RCT_EXPORT_MODULE()
              @"onEndDisplayingCell",
              @"onItemNotification",
              @"onAccessoryPress",
-             @"onLoadMore"
+             @"onLoadMore",
+             @"clearSelection",
              ];
 }
 
@@ -245,6 +246,19 @@ RCT_EXPORT_METHOD(endRefresh:(nonnull NSNumber *)reactTag
              RCTLogError(@"Invalid view returned from registry, expecting RNTableView, got: %@", view);
          }
          [view endRefreshWithHeader:isheader noMoreData:isNoMore];
+     }];
+}
+
+
+RCT_EXPORT_METHOD(clearSelection:(nonnull NSNumber *)reactTag)
+{
+    [self.bridge.uiManager addUIBlock:
+     ^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, UIView *> *viewRegistry){
+         RNTableView *view = viewRegistry[reactTag];
+         if (![view isKindOfClass:[RNTableView class]]) {
+             RCTLogError(@"Invalid view returned from registry, expecting RNTableView, got: %@", view);
+         }
+         [view clearSelection];
      }];
 }
 

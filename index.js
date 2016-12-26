@@ -159,6 +159,12 @@ var TableView = React.createClass({
       );
     },
 
+    clearSelection: function(){
+      NativeModules.RNTableViewManager.clearSelection(
+        findNodeHandle(this.tableView)
+      );
+    },
+
     endRefresh: function(isHeader, noMoreData) {
         NativeModules.RNTableViewManager.endRefresh(
           findNodeHandle(this.tableView),
