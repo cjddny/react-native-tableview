@@ -562,7 +562,9 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         }
         [self.tableView reloadData];
     }
-    
+    if ([oldValue isEqualToDictionary:newValue]) {
+        return;
+    }
     [_eventDispatcher sendInputEventWithName:@"press" body:newValue];
     self.selectedIndexes[indexPath.section] = [NSNumber numberWithInteger:indexPath.item];
 }
